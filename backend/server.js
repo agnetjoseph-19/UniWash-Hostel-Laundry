@@ -1,0 +1,33 @@
+const express = require("express");
+const mongoose = require("mongoose");
+const authRoutes = require("./routes/authRoutes");
+const bookingRoutes = require("./routes/bookingRoutes");
+
+const app = express();
+
+const PORT = 5000;
+
+// Middleware
+app.use(express.json());
+app.use("/api/auth", authRoutes);
+app.use("/api/bookings", bookingRoutes);
+
+// MongoDB connection
+mongoose
+  .connect("mongodb://127.0.0.1:27017/uniwash")
+  .then(() => {
+    console.log("MongoDB connected successfully!");
+  })
+  .catch((error) => {
+    console.error("MongoDB connection failed:", error);
+  });
+
+// Test route
+app.get("/", (req, res) => {
+  res.send("UniWash Backend is running!");
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`UniWash server running on http://localhost:${PORT}`);
+});
