@@ -1,139 +1,263 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function LaundryStatus() {
+  const location = useLocation();
   const navigate = useNavigate();
 
-  const currentStatus = "Washing";
+  const bookingFromState = location.state;
 
-  const statuses = [
-    {
-      name: "Booking Confirmed",
-      icon: "✅",
-    },
-    {
-      name: "Pickup",
-      icon: "📦",
-    },
-    {
-      name: "Washing",
-      icon: "🫧",
-    },
-    {
-      name: "Drying",
-      icon: "🌬️",
-    },
-    {
-      name: "Ironing",
-      icon: "👔",
-    },
-    {
-      name: "Ready",
-      icon: "✨",
-    },
-    {
-      name: "Delivered",
-      icon: "🏠",
-    },
-  ];
+  const [booking, setBooking] =
+    useState(bookingFromState);
 
-  const currentIndex = statuses.findIndex(
-    (status) => status.name === currentStatus
-  );
+  const [loading, setLoading] =
+    useState(!bookingFromState);
 
-  return (
-    <div className="status-page">
+  useEffect(() => {
+    const fetchLatestBooking = async () => {
+      if (bookingFromState) {
+        setLoading(false);
+        return;
+      }
 
-      <div className="status-container">
+      const user = JSON.parse(
+        localStorage.getItem("uniwashUser")
+      );
 
-        <h1>Laundry Status 🚚</h1>
+      if (!user || !user.id) {
+        navigate("/login");
+        return;
+      }
 
-        <p className="status-subtitle">
-          Track your laundry from pickup to delivery.
-        </p>
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/bookings/student/${user.id}`
+        );
 
-        <div className="status-card">
+        const data = await response.json();
 
-          <div className="status-booking">
+        if (
+          response.ok &&
+          data.bookings.length > 0
+        ) {
+          setBooking(data.bookings[0]);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-            <div>
-              <span>Booking ID</span>
-              <strong>UW1001</strong>
-            </div>
+    fetchLatestBooking();
+  }, [bookingFromState, navigate]);
 
-            <div>
-              <span>Service</span>
-              <strong>
-                Washing + Drying + Ironing
-              </strong>
-            </div>
+  if (loading) {
+    return (
+      <div className="success-page">
+        <div className="success-card">
+          <h2>
+            Loading Laundry Status...
+          </h2>
+        </div>
+      </div>
+    );
+  }
 
-          </div>
+  if (!booking) {
+    return (
+      <div className="success-page">
+        <div className="success-card">
 
-          <h2>Current Status</h2>
+          <h2>No Booking Found</h2>
 
-          <div className="current-status">
-            🫧 {currentStatus}
-          </div>
-
-          <div className="status-timeline">
-
-            {statuses.map((status, index) => {
-
-              const isCompleted = index <= currentIndex;
-              const isCurrent = index === currentIndex;
-
-              return (
-                <div
-                  className={`status-step ${
-                    isCompleted ? "completed" : ""
-                  } ${isCurrent ? "current" : ""}`}
-                  key={status.name}
-                >
-
-                  <div className="status-icon">
-                    {status.icon}
-                  </div>
-
-                  <div className="status-step-content">
-                    <strong>{status.name}</strong>
-
-                    <span>
-                      {isCurrent
-                        ? "Laundry is currently here"
-                        : index < currentIndex
-                        ? "Completed"
-                        : "Waiting"}
-                    </span>
-                  </div>
-
-                </div>
-              );
-            })}
-
-          </div>
-
-          <div className="delivery-info">
-
-            <div>
-              <span>Expected Delivery</span>
-              <strong>Within 48 hours</strong>
-            </div>
-
-            <div>
-              <span>Collection Point</span>
-              <strong>Girls Hostel</strong>
-            </div>
-
-          </div>
+          <p>
+            Create a laundry booking to
+            track its status.
+          </p>
 
           <button
-            className="booking-button"
-            onClick={() => navigate("/student-dashboard")}
+            onClick={() =>
+              navigate("/book-laundry")
+            }
           >
-            Back to Dashboard
+            Book Laundry
           </button>
 
         </div>
+      </div>
+    );
+  }
+
+  const statusSteps = [
+    "Booking Confirmed",
+    "Clothes Collected",
+    "In Processing",
+    "Washing",
+    "Drying",
+    "Ironing",
+    "Ready for Delivery",
+    "Delivered",
+    "Completed",
+  ];
+
+  const currentIndex =
+    statusSteps.indexOf(
+      booking.status
+    );
+
+  // Format delivery deadline
+  const formattedDeadline =
+    booking.deliveryDeadline
+      ? new Date(
+          booking.deliveryDeadline
+        ).toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+      : "Not available";
+
+  return (
+    <div className="success-page">
+
+      <div className="success-card">
+
+        <h1>
+          Laundry Status 🚚
+        </h1>
+
+        <p className="success-message">
+          Track your laundry booking in
+          real time.
+        </p>
+
+        <div className="success-details">
+
+          <div>
+            <span>Booking ID</span>
+
+            <strong>
+              {booking._id
+                .slice(-8)
+                .toUpperCase()}
+            </strong>
+          </div>
+
+          <div>
+            <span>Service</span>
+
+            <strong>
+              {booking.service}
+            </strong>
+          </div>
+
+          <div>
+            <span>Pickup Date</span>
+
+            <strong>
+              {new Date(
+                booking.bookingDate
+              ).toLocaleDateString(
+                "en-IN"
+              )}
+            </strong>
+          </div>
+
+          <div>
+            <span>Pickup Session</span>
+
+            <strong>
+              {booking.slot}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Collection Point
+            </span>
+
+            <strong>
+              {booking.collectionPoint}
+            </strong>
+          </div>
+
+          <div>
+            <span>Payment</span>
+
+            <strong>
+              {booking.paymentStatus}
+            </strong>
+          </div>
+
+          {/* 48-hour delivery deadline */}
+          <div>
+            <span>
+              🕐 Delivery Deadline
+            </span>
+
+            <strong>
+              {formattedDeadline}
+            </strong>
+          </div>
+
+        </div>
+
+        <div className="status-tracker">
+
+          {statusSteps.map(
+            (step, index) => (
+
+              <div
+                key={step}
+                className={
+                  index <= currentIndex
+                    ? "status-step active"
+                    : "status-step"
+                }
+              >
+
+                <div className="status-circle">
+                  {index <=
+                  currentIndex
+                    ? "✓"
+                    : index + 1}
+                </div>
+
+                <span>
+                  {step}
+                </span>
+
+              </div>
+            )
+          )}
+
+        </div>
+
+        <div className="booking-total">
+
+          <span>
+            Current Status
+          </span>
+
+          <strong>
+            {booking.status}
+          </strong>
+
+        </div>
+
+        <button
+          onClick={() =>
+            navigate(
+              "/student-dashboard"
+            )
+          }
+        >
+          Back to Dashboard
+        </button>
 
       </div>
 

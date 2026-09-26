@@ -1,113 +1,103 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 function AdminDashboard() {
-  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalBookings: 0,
+    activeBookings: 0,
+    totalComplaints: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/admin/stats"
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setStats(data);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   return (
-    <div className="admin-page">
+    <div className="dashboard-page">
 
-      <div className="admin-container">
+      <div className="dashboard-container">
 
         <h1>Admin Dashboard 👨‍💼</h1>
 
-        <p className="admin-subtitle">
-          Manage UniWash laundry operations from one place.
+        <p className="dashboard-subtitle">
+          Manage UniWash operations and monitor activities.
         </p>
 
-        <div className="admin-stats">
+        {loading ? (
+          <p>Loading statistics...</p>
+        ) : (
+          <div className="dashboard-grid">
 
-          <div className="admin-stat-card">
-            <span>👥</span>
-            <h3>120</h3>
-            <p>Total Students</p>
+            <div className="dashboard-card">
+              <div className="dashboard-icon">
+                👨‍🎓
+              </div>
+
+              <h3>Total Students</h3>
+
+              <p className="admin-number">
+                {stats.totalStudents}
+              </p>
+            </div>
+
+            <div className="dashboard-card">
+              <div className="dashboard-icon">
+                📋
+              </div>
+
+              <h3>Total Bookings</h3>
+
+              <p className="admin-number">
+                {stats.totalBookings}
+              </p>
+            </div>
+
+            <div className="dashboard-card">
+              <div className="dashboard-icon">
+                🧺
+              </div>
+
+              <h3>Active Bookings</h3>
+
+              <p className="admin-number">
+                {stats.activeBookings}
+              </p>
+            </div>
+
+            <div className="dashboard-card">
+              <div className="dashboard-icon">
+                💬
+              </div>
+
+              <h3>Total Complaints</h3>
+
+              <p className="admin-number">
+                {stats.totalComplaints}
+              </p>
+            </div>
+
           </div>
-
-          <div className="admin-stat-card">
-            <span>📋</span>
-            <h3>35</h3>
-            <p>Active Bookings</p>
-          </div>
-
-          <div className="admin-stat-card">
-            <span>🚚</span>
-            <h3>18</h3>
-            <p>In Progress</p>
-          </div>
-
-          <div className="admin-stat-card">
-            <span>💬</span>
-            <h3>5</h3>
-            <p>Pending Complaints</p>
-          </div>
-
-        </div>
-
-        <div className="admin-grid">
-
-          <div className="admin-card">
-            <div className="admin-icon">📋</div>
-
-            <h3>Manage Bookings</h3>
-
-            <p>
-              View student laundry bookings and manage their status.
-            </p>
-
-            <button>
-              View Bookings
-            </button>
-          </div>
-
-          <div className="admin-card">
-            <div className="admin-icon">👥</div>
-
-            <h3>Manage Students</h3>
-
-            <p>
-              View registered students and their account information.
-            </p>
-
-            <button>
-              View Students
-            </button>
-          </div>
-
-          <div className="admin-card">
-            <div className="admin-icon">🚚</div>
-
-            <h3>Laundry Status</h3>
-
-            <p>
-              Update the status of student laundry orders.
-            </p>
-
-            <button>
-              Update Status
-            </button>
-          </div>
-
-          <div className="admin-card">
-            <div className="admin-icon">💬</div>
-
-            <h3>Complaints</h3>
-
-            <p>
-              Review and manage student complaints.
-            </p>
-
-            <button>
-              Manage Complaints
-            </button>
-          </div>
-
-        </div>
-
-        <button
-          className="admin-back-button"
-          onClick={() => navigate("/student-dashboard")}
-        >
-          Back to Dashboard
-        </button>
+        )}
 
       </div>
 

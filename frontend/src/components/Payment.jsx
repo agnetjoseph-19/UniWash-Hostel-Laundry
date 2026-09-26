@@ -10,7 +10,6 @@ function Payment() {
     return (
       <div className="booking-page">
         <div className="booking-container">
-
           <div className="booking-card">
 
             <h2>No Payment Found</h2>
@@ -21,13 +20,14 @@ function Payment() {
 
             <button
               className="booking-button"
-              onClick={() => navigate("/book-laundry")}
+              onClick={() =>
+                navigate("/book-laundry")
+              }
             >
               Go to Booking
             </button>
 
           </div>
-
         </div>
       </div>
     );
@@ -47,47 +47,66 @@ function Payment() {
         <h1>Payment 💳</h1>
 
         <p className="booking-subtitle">
-          Complete your payment to confirm the laundry booking.
+          Complete your payment to confirm your
+          laundry booking.
         </p>
 
         <div className="booking-card">
 
           <div className="summary-item">
             <span>Service</span>
-            <strong>{booking.service}</strong>
+            <strong>
+              {booking.service}
+            </strong>
           </div>
 
           <div className="summary-item">
             <span>Quantity</span>
-            <strong>{booking.quantity} kg</strong>
+            <strong>
+              {booking.quantity} kg
+            </strong>
           </div>
 
           <div className="summary-item">
-            <span>Pickup Day</span>
-            <strong>{booking.pickupDay}</strong>
+            <span>Pickup Date</span>
+            <strong>
+              {new Date(
+                booking.bookingDate
+              ).toLocaleDateString("en-IN")}
+            </strong>
+          </div>
+
+          <div className="summary-item">
+            <span>Pickup Session</span>
+            <strong>
+              {booking.slot}
+            </strong>
           </div>
 
           <div className="summary-item">
             <span>Collection Point</span>
-            <strong>{booking.collectionPoint}</strong>
+            <strong>
+              {booking.collectionPoint}
+            </strong>
           </div>
 
           <div className="booking-total">
             <span>Total Amount</span>
-            <strong>₹{booking.totalPrice}</strong>
+
+            <strong>
+              ₹{booking.totalAmount}
+            </strong>
           </div>
 
           <button
             className="booking-button"
             onClick={handlePayment}
           >
-            Pay ₹{booking.totalPrice}
+            Pay ₹{booking.totalAmount}
           </button>
 
         </div>
-
       </div>
-
     </div>
   );
 }

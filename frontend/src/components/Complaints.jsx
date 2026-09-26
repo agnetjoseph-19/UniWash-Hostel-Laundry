@@ -1,97 +1,151 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Complaints() {
   const navigate = useNavigate();
 
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
+  const [bookings, setBookings] = useState([]);
+  const [complaints, setComplaints] = useState([]);
+  const [bookingId, setBookingId] = useState("");
+  const [complaint, setComplaint] = useState("");
 
-  const complaints = [
-    {
-      id: "C001",
-      category: "Late Delivery",
-      description: "Laundry was delivered later than expected.",
-      status: "Resolved",
-    },
-    {
-      id: "C002",
-      category: "Missing Item",
-      description: "One clothing item was missing from the order.",
-      status: "Pending",
-    },
-  ];
+  useEffect(() => {
+    const user = JSON.parse(
+      localStorage.getItem("uniwashUser")
+    );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (!category || !description) {
-      alert("Please fill in all complaint details.");
+    if (!user || !user.id) {
+      navigate("/login");
       return;
     }
 
-    alert("Complaint submitted successfully! 💬");
+    const loadData = async () => {
+      try {
+        const bookingResponse = await fetch(
+          `http://localhost:5000/api/bookings/student/${user.id}`
+        );
 
-    setCategory("");
-    setDescription("");
+        const bookingData =
+          await bookingResponse.json();
+
+        setBookings(bookingData.bookings || []);
+
+        const complaintResponse = await fetch(
+          `http://localhost:5000/api/complaints/student/${user.id}`
+        );
+
+        const complaintData =
+          await complaintResponse.json();
+
+        setComplaints(
+          complaintData.complaints || []
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    loadData();
+  }, [navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const user = JSON.parse(
+      localStorage.getItem("uniwashUser")
+    );
+
+    if (!bookingId || !complaint) {
+      alert("Please select a booking and enter a complaint.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/complaints",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            studentId: user.id,
+            bookingId: bookingId,
+            complaint: complaint,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Complaint failed.");
+        return;
+      }
+
+      alert("Complaint submitted successfully! 🎉");
+
+      setComplaints([
+        data.complaint,
+        ...complaints,
+      ]);
+
+      setBookingId("");
+      setComplaint("");
+    } catch (error) {
+      console.log(error);
+      alert("Backend connection failed.");
+    }
   };
 
   return (
-    <div className="complaints-page">
+    <div className="booking-page">
 
-      <div className="complaints-container">
+      <div className="booking-container">
 
         <h1>Complaints 💬</h1>
 
-        <p className="complaints-subtitle">
+        <p className="booking-subtitle">
           Submit and track your laundry complaints.
         </p>
 
-        {/* Complaint Form */}
-
-        <div className="complaint-card">
+        <div className="booking-card">
 
           <h2>Submit a Complaint</h2>
 
           <form onSubmit={handleSubmit}>
 
-            <label>Complaint Category</label>
+            <label>Select Booking</label>
 
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={bookingId}
+              onChange={(e) =>
+                setBookingId(e.target.value)
+              }
             >
               <option value="">
-                Select a category
+                Select a booking
               </option>
 
-              <option value="Late Delivery">
-                Late Delivery
-              </option>
-
-              <option value="Missing Item">
-                Missing Item
-              </option>
-
-              <option value="Damaged Clothes">
-                Damaged Clothes
-              </option>
-
-              <option value="Wrong Service">
-                Wrong Service
-              </option>
-
-              <option value="Other">
-                Other
-              </option>
+              {bookings.map((booking) => (
+                <option
+                  key={booking._id}
+                  value={booking._id}
+                >
+                  {booking.service} - ₹
+                  {booking.totalAmount}
+                </option>
+              ))}
             </select>
 
-            <label>Description</label>
+            <label>Complaint</label>
 
             <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your complaint..."
+              value={complaint}
+              onChange={(e) =>
+                setComplaint(e.target.value)
+              }
+              placeholder="Enter your complaint..."
               rows="5"
             />
 
@@ -106,61 +160,45 @@ function Complaints() {
 
         </div>
 
-        {/* Previous Complaints */}
+        <h2>Complaint History</h2>
 
-        <div className="previous-complaints">
-
-          <h2>My Complaints</h2>
-
-          {complaints.map((complaint) => (
-
+        {complaints.length === 0 ? (
+          <div className="booking-card">
+            <p>No complaints submitted yet.</p>
+          </div>
+        ) : (
+          complaints.map((item) => (
             <div
-              className="complaint-card complaint-history"
-              key={complaint.id}
+              className="booking-card"
+              key={item._id}
             >
 
-              <div className="complaint-header">
+              <p>
+                <strong>Complaint:</strong>{" "}
+                {item.complaint}
+              </p>
 
-                <div>
-                  <span>Complaint ID</span>
-                  <strong>{complaint.id}</strong>
-                </div>
+              <p>
+                <strong>Status:</strong>{" "}
+                {item.status}
+              </p>
 
-                <span
-                  className={`complaint-status ${
-                    complaint.status === "Resolved"
-                      ? "resolved"
-                      : "pending"
-                  }`}
-                >
-                  {complaint.status}
-                </span>
-
-              </div>
-
-              <div className="complaint-details">
-
-                <p>
-                  <strong>Category:</strong>{" "}
-                  {complaint.category}
-                </p>
-
-                <p>
-                  <strong>Description:</strong>{" "}
-                  {complaint.description}
-                </p>
-
-              </div>
+              <p>
+                <strong>Date:</strong>{" "}
+                {new Date(
+                  item.createdAt
+                ).toLocaleDateString("en-IN")}
+              </p>
 
             </div>
-
-          ))}
-
-        </div>
+          ))
+        )}
 
         <button
-          className="back-dashboard-button"
-          onClick={() => navigate("/student-dashboard")}
+          className="booking-button"
+          onClick={() =>
+            navigate("/student-dashboard")
+          }
         >
           Back to Dashboard
         </button>

@@ -1,172 +1,177 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 function StaffDashboard() {
-  const navigate = useNavigate();
-
-  const [orders, setOrders] = useState([
-    {
-      id: "UW1001",
-      student: "Student 1",
-      service: "Washing + Drying + Ironing",
-      quantity: 3,
-      pickupPoint: "Girls Hostel",
-      status: "Washing",
-    },
-    {
-      id: "UW1002",
-      student: "Student 2",
-      service: "Washing Only",
-      quantity: 2,
-      pickupPoint: "College Store",
-      status: "Pickup",
-    },
-    {
-      id: "UW1003",
-      student: "Student 3",
-      service: "Ironing Only",
-      quantity: 4,
-      pickupPoint: "PG Boys Hostel",
-      status: "Ready",
-    },
-  ]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const statuses = [
-    "Pickup",
+    "Booking Confirmed",
+    "Clothes Collected",
+    "In Processing",
     "Washing",
     "Drying",
     "Ironing",
-    "Ready",
+    "Ready for Delivery",
     "Delivered",
+    "Completed",
   ];
 
-  const updateStatus = (id, newStatus) => {
-    setOrders(
-      orders.map((order) =>
-        order.id === id
-          ? { ...order, status: newStatus }
-          : order
-      )
-    );
+  const fetchBookings = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/bookings/all"
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setBookings(data.bookings || []);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const updateStatus = async (id, status) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/bookings/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(
+          data.message ||
+            "Status update failed."
+        );
+        return;
+      }
+
+      setBookings((currentBookings) =>
+        currentBookings.map((booking) =>
+          booking._id === id
+            ? data.booking
+            : booking
+        )
+      );
+
+      alert("Status updated successfully! 🎉");
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Cannot connect to the UniWash backend."
+      );
+    }
   };
 
   return (
-    <div className="staff-page">
+    <div className="dashboard-page">
 
-      <div className="staff-container">
+      <div className="dashboard-container">
 
-        <h1>Laundry Staff Dashboard 👕</h1>
+        <h1>Laundry Staff Dashboard 🧺</h1>
 
-        <p className="staff-subtitle">
-          Manage assigned laundry orders and update their status.
+        <p className="dashboard-subtitle">
+          Manage laundry orders and update their status.
         </p>
 
-        <div className="staff-stats">
-
-          <div className="staff-stat-card">
-            <span>📋</span>
-            <h3>{orders.length}</h3>
-            <p>Assigned Orders</p>
+        {loading ? (
+          <p>Loading bookings...</p>
+        ) : bookings.length === 0 ? (
+          <div className="dashboard-card">
+            <h3>No Bookings</h3>
+            <p>
+              There are no laundry bookings yet.
+            </p>
           </div>
+        ) : (
+          <div className="bookings-list">
 
-          <div className="staff-stat-card">
-            <span>🫧</span>
-            <h3>
-              {
-                orders.filter(
-                  (order) => order.status === "Washing"
-                ).length
-              }
-            </h3>
-            <p>Washing</p>
-          </div>
+            {bookings.map((booking) => (
 
-          <div className="staff-stat-card">
-            <span>✨</span>
-            <h3>
-              {
-                orders.filter(
-                  (order) => order.status === "Ready"
-                ).length
-              }
-            </h3>
-            <p>Ready</p>
-          </div>
+              <div
+                className="booking-card"
+                key={booking._id}
+              >
 
-          <div className="staff-stat-card">
-            <span>🚚</span>
-            <h3>
-              {
-                orders.filter(
-                  (order) => order.status === "Delivered"
-                ).length
-              }
-            </h3>
-            <p>Delivered</p>
-          </div>
+                <h3>
+                  Booking #
+                  {booking._id
+                    .slice(-8)
+                    .toUpperCase()}
+                </h3>
 
-        </div>
+                <p>
+                  <strong>Student:</strong>{" "}
+                  {booking.studentId?.name ||
+                    "Student"}
+                </p>
 
-        <div className="staff-orders">
+                <p>
+                  <strong>Service:</strong>{" "}
+                  {booking.service}
+                </p>
 
-          {orders.map((order) => (
+                <p>
+                  <strong>Quantity:</strong>{" "}
+                  {booking.quantity} kg
+                </p>
 
-            <div
-              className="staff-order-card"
-              key={order.id}
-            >
+                <p>
+                  <strong>Pickup:</strong>{" "}
+                  {new Date(
+                    booking.bookingDate
+                  ).toLocaleDateString("en-IN")}
+                </p>
 
-              <div className="staff-order-header">
+                <p>
+                  <strong>Session:</strong>{" "}
+                  {booking.slot}
+                </p>
 
-                <div>
-                  <span>Booking ID</span>
-                  <strong>{order.id}</strong>
-                </div>
+                <p>
+                  <strong>Collection Point:</strong>{" "}
+                  {booking.collectionPoint}
+                </p>
 
-                <span className="staff-status">
-                  {order.status}
-                </span>
+                <p>
+                  <strong>Payment:</strong>{" "}
+                  {booking.paymentStatus}
+                </p>
 
-              </div>
+                <p>
+                  <strong>Current Status:</strong>{" "}
+                  {booking.status}
+                </p>
 
-              <div className="staff-order-details">
-
-                <div>
-                  <span>Student</span>
-                  <strong>{order.student}</strong>
-                </div>
-
-                <div>
-                  <span>Service</span>
-                  <strong>{order.service}</strong>
-                </div>
-
-                <div>
-                  <span>Quantity</span>
-                  <strong>{order.quantity} kg</strong>
-                </div>
-
-                <div>
-                  <span>Collection Point</span>
-                  <strong>{order.pickupPoint}</strong>
-                </div>
-
-              </div>
-
-              <div className="staff-update">
-
-                <label>Update Status</label>
+                <label>
+                  Update Status
+                </label>
 
                 <select
-                  value={order.status}
+                  value={booking.status}
                   onChange={(e) =>
                     updateStatus(
-                      order.id,
+                      booking._id,
                       e.target.value
                     )
                   }
                 >
-
                   {statuses.map((status) => (
                     <option
                       key={status}
@@ -175,23 +180,14 @@ function StaffDashboard() {
                       {status}
                     </option>
                   ))}
-
                 </select>
 
               </div>
 
-            </div>
+            ))}
 
-          ))}
-
-        </div>
-
-        <button
-          className="staff-back-button"
-          onClick={() => navigate("/admin-dashboard")}
-        >
-          Back to Admin Dashboard
-        </button>
+          </div>
+        )}
 
       </div>
 

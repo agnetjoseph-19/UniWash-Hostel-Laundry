@@ -17,6 +17,15 @@ const capacitySchema = new mongoose.Schema(
       required: true,
     },
 
+    slot: {
+      type: String,
+      enum: [
+        "7:00 AM - 8:00 AM",
+        "3:30 PM - 4:30 PM",
+      ],
+      required: true,
+    },
+
     maxCapacity: {
       type: Number,
       required: true,

@@ -9,16 +9,28 @@ const bookingSchema = new mongoose.Schema(
     },
 
     service: {
-  type: String,
-  enum: [
-    "Washing Only",
-    "Washing + Drying",
-    "Washing + Drying + Ironing",
-    "Washing + Starch + Drying + Ironing",
-    "Ironing Only",
-  ],
-  required: true,
-},
+      type: String,
+      enum: [
+        "Washing Only",
+        "Washing + Drying",
+        "Washing + Drying + Ironing",
+        "Washing + Starch + Drying + Ironing",
+        "Ironing Only",
+      ],
+      required: true,
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
     bookingDate: {
       type: Date,
@@ -27,6 +39,10 @@ const bookingSchema = new mongoose.Schema(
 
     slot: {
       type: String,
+      enum: [
+        "7:00 AM - 8:00 AM",
+        "3:30 PM - 4:30 PM",
+      ],
       required: true,
     },
 
@@ -55,6 +71,12 @@ const bookingSchema = new mongoose.Schema(
         "Cancelled",
       ],
       default: "Booking Confirmed",
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Paid"],
+      default: "Pending",
     },
 
     deliveryDeadline: {
