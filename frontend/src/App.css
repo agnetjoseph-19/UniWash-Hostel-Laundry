@@ -1487,3 +1487,53 @@
   background: #222;
   color: white;
 }
+/* Delivery Deadline Alert */
+
+.deadline-alert {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 12px;
+  background: #fff4e5;
+  border: 1px solid #ffd59a;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.deadline-alert span {
+  font-size: 14px;
+  color: #777;
+}
+
+.deadline-alert strong {
+  font-size: 20px;
+  color: #d97706;
+}
+
+.deadline-alert p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #b45309;
+}
+/* Smart Status Notification */
+
+.status-notification {
+  margin: 20px 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: #eef6ff;
+  border: 1px solid #b9d9ff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.status-notification span {
+  font-size: 14px;
+  color: #555;
+}
+
+.status-notification strong {
+  font-size: 16px;
+  color: #2563eb;
+}

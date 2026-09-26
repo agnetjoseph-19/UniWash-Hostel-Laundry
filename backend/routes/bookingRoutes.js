@@ -72,6 +72,80 @@ router.get("/capacity", async (req, res) => {
   }
 });
 
+// Check delivery deadline
+router.get("/:id/deadline", async (req, res) => {
+  try {
+    const booking = await Booking.findById(
+      req.params.id
+    );
+
+    if (!booking) {
+      return res.status(404).json({
+        message: "Booking not found.",
+      });
+    }
+
+    if (!booking.deliveryDeadline) {
+      return res.status(400).json({
+        message:
+          "Delivery deadline is not available.",
+      });
+    }
+
+    const now = new Date();
+
+    const deadline = new Date(
+      booking.deliveryDeadline
+    );
+
+    const difference =
+      deadline.getTime() - now.getTime();
+
+    if (difference <= 0) {
+      return res.status(200).json({
+        bookingId: booking._id,
+        deliveryDeadline: deadline,
+        expired: true,
+        hoursRemaining: 0,
+        minutesRemaining: 0,
+        message:
+          "Delivery deadline has passed.",
+      });
+    }
+
+    const totalMinutes = Math.floor(
+      difference / (1000 * 60)
+    );
+
+    const hoursRemaining = Math.floor(
+      totalMinutes / 60
+    );
+
+    const minutesRemaining =
+      totalMinutes % 60;
+
+    res.status(200).json({
+      bookingId: booking._id,
+      deliveryDeadline: deadline,
+      expired: false,
+      hoursRemaining,
+      minutesRemaining,
+      message:
+        hoursRemaining <= 6
+          ? "Delivery deadline is approaching!"
+          : "Delivery is within the 48-hour deadline.",
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message:
+        "Failed to check delivery deadline.",
+      error: error.message,
+    });
+  }
+});
+
 // Create booking
 router.post("/", async (req, res) => {
   try {
@@ -154,8 +228,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Smart capacity:
-    // Collection point + date + slot
+    // Smart capacity
     let capacity = await Capacity.findOne({
       collectionPoint,
       bookingDate: checkDate,
@@ -188,7 +261,6 @@ router.post("/", async (req, res) => {
     }
 
     // Calculate delivery deadline
-    // based on the selected pickup slot
     const deliveryDeadline = new Date(
       selectedDate
     );

@@ -37,9 +37,16 @@ function Login() {
         return;
       }
 
+      // Save complete user information
       localStorage.setItem(
         "uniwashUser",
         JSON.stringify(data.user)
+      );
+
+      // Save student ID separately
+      localStorage.setItem(
+        "studentId",
+        data.user._id
       );
 
       alert("Login successful! 🎉");
